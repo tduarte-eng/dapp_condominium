@@ -1,13 +1,17 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-
+import { doLogin } from '../services/Web3Service'
 
 function Login() {
 
   const navigate = useNavigate();
 
+  const [message, setMessage] = useState<string>("");
+
   function btnLoginClick() {
-    navigate("/topics");
+    doLogin()
+      .then(result => navigate("/topics"))
+      .catch(err => setMessage(err.message));
   }
 
   return (
@@ -33,6 +37,9 @@ function Login() {
                       <button type="button" className="btn bg-gradient-primary w-100 my-4 mb-2" onClick={btnLoginClick}>
                         <img src="/assets/metamask.svg" alt="Metamask Logo" width="48" className="me-2" />Sign in With Metamask</button>
                     </div>
+                    <p className="mt-4 text-sm text-center text-danger">
+                      {message}
+                    </p>
                     <p className="mt-4 text-sm text-center">
                       Don't have an account? Ask to the
                       <a href="mailto:thiagodp@bnb.gov.br" className="text-primary text-gradient font-weight-bold ms-2">Agente</a>
