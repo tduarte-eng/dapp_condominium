@@ -1,6 +1,7 @@
 import { ethers } from "ethers";
 import ABI from './ABI.json';
 import type { Transaction } from "ethers";
+import ResidentPage from "../pages/residents/ResidentPage";
 
 const ADAPTER_ADDRESS = `${import.meta.env.VITE_ADAPTER_ADDRESS}`;
 
@@ -24,6 +25,11 @@ export type Resident = {
     residence: number;
     nextPayment: number;
 };
+
+export function isManager(): boolean {
+    const profile = localStorage.getItem("profile");
+    return profile !== null && parseInt(profile) === Profile.MANAGER;
+}
 
 function getProvider(): ethers.BrowserProvider {
     if (!window.ethereum) throw new Error("No Metamask found");
@@ -94,4 +100,30 @@ export async function upgrade(address: string): Promise<Transaction> {
     if (getProfile() !== Profile.MANAGER) throw new Error("You do not have permission");
     const contract = await getContractSigner();
     return contract.upgrade(address);
+}
+
+export async function addResident(wallet: string, residenceId: number): Promise<Transaction> {
+    if (getProfile() === Profile.RESIDENT) throw new Error("You do not have permission");
+    const contract = await getContractSigner();
+    return contract.addResident(wallet, residenceId);
+}
+
+export type ResidentPage = {
+    residents: Resident[];
+    total: ethers.BigNumberish;
+}
+
+
+export async function getResidents(page: number = 1, pageSize: number = 10): Promise<ResidentPage> {
+    const contract = getContract();
+    const result = await contract.getResidents(page, pageSize) as ResidentPage;
+
+
+    const residents = [...result.residents.filter(r => r.residence)].sort((a, b) => ethers.toNumber(a.residence - b.residence));
+
+    
+    return{
+        residents,
+        total: result.total
+    } as ResidentPage;
 }
