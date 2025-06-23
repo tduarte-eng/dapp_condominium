@@ -15,11 +15,22 @@ type Props = {
  * - onChange
  */
 function SwitchInput(props: Props) {
+//    function onSwitchChange(evt: React.ChangeEvent<HTMLInputElement>) {
+//        const isChecked = evt.target.value === "true";
+//        evt.target.value = `${!isChecked}`;
+//        props.onChange(evt);
+//    }
     function onSwitchChange(evt: React.ChangeEvent<HTMLInputElement>) {
-        const isChecked = evt.target.value === "true";
-        evt.target.value = `${!isChecked}`;
-        props.onChange(evt);
+      const syntheticEvent = {
+        target: {
+          id: props.id,
+          value: evt.target.checked.toString()
+        }
+      } as React.ChangeEvent<HTMLInputElement>;
+      props.onChange(syntheticEvent);
     }
+
+
 
     function getIsChecked(): boolean {
         if (typeof props.isChecked === "string")
