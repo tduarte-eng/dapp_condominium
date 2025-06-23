@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { type Resident } from "../../services/Web3Service";
+import { isManager, type Resident } from "../../services/Web3Service";
 
 type Props = {
     data: Resident;
@@ -57,8 +57,19 @@ function ResidentRow(props: Props) {
             </td>
             <td>
                 {
-                    <></>
-                }
+                    isManager()
+                    ? (
+                        <>
+                            <a href={"/residents/edit/" + props.data.wallet} className="btn btn-info btn-sm me-1">
+                            <i className="material-icons text-sm">edit</i>
+                            </a> 
+                            <a href="#" className="btn btn-danger btn-sm me-1" onClick={btnDeleteClick}>
+                            <i className="material-icons text-sm">delete</i>
+                            </a>                            
+                        </>
+                    )
+                    : <></>
+                } 
             </td>
         </tr>
     )

@@ -21,7 +21,7 @@ function Router() {
         return isAuth ? children : <Navigate to="/" />
     }
 
-    function ManageRoute({children}: Props){
+    function ManagerRoute({children}: Props){
         const isAuth = localStorage.getItem("account") !== null;
         const isManager = parseInt(localStorage.getItem("profile") || "0" ) === Profile.MANAGER;
         
@@ -69,14 +69,19 @@ function Router() {
                     </PrivateRoute>    
                 } />
                 <Route path='/transfer' element={
-                    <ManageRoute>
+                    <ManagerRoute>
                         <Transfer />
-                    </ManageRoute>    
+                    </ManagerRoute>    
                 } />
                 <Route path='/settings' element={
-                    <ManageRoute>
+                    <ManagerRoute>
                         <Settings />
-                    </ManageRoute>    
+                    </ManagerRoute>    
+                } />
+                <Route path="/residents/edit/:wallet" element={
+                    <ManagerRoute>
+                        <ResidentPage />
+                    </ManagerRoute>    
                 } />
                 <Route path='/residents/new' element={
                     <CouncilRoute>

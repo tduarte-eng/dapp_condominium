@@ -1,14 +1,16 @@
 import { useState, useEffect} from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import Footer from "../../components/Footer";
 import Alert from "../../components/Alert";
 import ResidentRow from "./ResidentRow"; 
-import { type Resident, getResidents } from "../../services/Web3Service";
+import { type Resident, getResidents, removeResident } from "../../services/Web3Service";
+import Loader from "../../components/Loader";
 
 
 function Residents(){
 
+    const navigate = useNavigate();    
     const [residents, setResidents] = useState<Resident[]>();
     const [message, setMessage] = useState<string>("");
     const [error, setError] = useState<string>("");
@@ -40,6 +42,19 @@ function Residents(){
         }
     }, [])
 
+    function onDeleteResident(wallet: string){
+        setIsLoading(true);
+        setMessage("");
+        setError("");
+        removeResident(wallet)
+            .then(tx => navigate("/residents?tx=" + tx.hash))
+            .catch(err => {
+                console.log("ERRO NO CATCH");
+                setIsLoading(false);
+                setError(err.message);
+            })
+    }
+
     return (
         <>
         <Sidebar />
@@ -66,18 +81,11 @@ function Residents(){
                             error
                                 ? <Alert alertClass="alert-danger" materialIcon="error" title="Error!" text={error} />
                                 : <></>
-                        }
+                            }
                         {
                         isLoading
                         ? (
-                            <div className='row ms-3'>
-                                <div className='col-md-6 mb-3'>
-                                    <p>
-                                        <i className="material-icons opacity-10 me-2">hourglass_empty</i>
-                                        Loading...                                    
-                                    </p>
-                                </div>    
-                            </div>
+                            <Loader/>
                         )    
                         : <></>    
                         }                        
@@ -95,7 +103,7 @@ function Residents(){
                         <tbody>
                         {
                         residents && residents.length 
-                            ? residents.map(resident => <ResidentRow data={resident} onDelete={(wallet: string) => alert(wallet)} />)
+                            ? residents.map(resident => <ResidentRow data={resident} onDelete={() => onDeleteResident(resident.wallet)} />)
                             : <></>
                         }
                         </tbody>

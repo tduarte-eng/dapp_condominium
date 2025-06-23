@@ -1,31 +1,89 @@
 import Sidebar from "../../components/Sidebar";
 import Footer from "../../components/Footer";
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import SwitchInput from "../../components/SwitchInput";
-import { addResident, isManager, type Resident } from "../../services/Web3Service";
+import { addResident, doLogout, getResident, getResidents, isManager, isResident, setCounselor, type Resident } from "../../services/Web3Service";
+import Loader from "../../components/Loader";
 
 
 function ResidentPage(){
 
     const navigate = useNavigate();
 
+    let {wallet} = useParams();
+
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [message, setMessage] = useState<string>("");
-    const [resident, setResident] =useState<Resident>({}as Resident);
+    const [resident, setResident] = useState<Resident>({} as Resident);
+
+    useEffect(() => {
+        if(isResident()){
+            doLogout();
+            navigate("/");
+        }
+        if (wallet){
+            setIsLoading(true);
+            getResident(wallet)
+                .then(resident => {
+                    setResident(resident);
+                    setIsLoading(false);
+                })
+                .catch(err => {
+                    setMessage(err.message);
+                    setIsLoading(false);
+                });
+        }
+    },[wallet])
 
     function onResidentChange(evt: React.ChangeEvent<HTMLInputElement>){
         setResident(prevState => ({...prevState, [evt.target.id]: evt.target.value}));
+        console.log("🟡 Campo Wallet carregada:", resident.wallet);
+        console.log("🟢 Valor Residencia:", resident.residence);
+        console.log("🔵 Estado isCounselor:", resident.isCounselor, evt.target.value);
+
+        
     }
 
     function btnSaveClick(){
+        console.log("🟡 Campo Wallet carregada:", resident.wallet);
+        console.log("🟢 Valor Residencia:", resident.residence);
+        console.log("🔵 Estado isCounselor:", resident.isCounselor);
         if(resident){
-        setMessage("Connecting to wallet...wait...");
-        addResident(resident.wallet, resident.residence)
-            .then(tx => navigate("/residents?tx=" + tx.hash))
-            .catch(err => setMessage(err.message));
+            setMessage("Connecting to wallet...wait...");
+            if (!wallet) {
+                addResident(resident.wallet, resident.residence)
+                    .then(tx => navigate("/residents?tx=" + tx.hash))
+                    .catch(err => setMessage(err.message));
+            }
+            else { 
+                setCounselor(resident.wallet, resident.isCounselor)
+                    .then(tx => navigate("/residents?tx=" + tx.hash))
+                    .catch(err => setMessage(err.message));
+ 
+            }
         }
     }
+
+    function getNextPayment() {
+        const timestamp = typeof resident.nextPayment === "bigint"
+        ? Number(resident.nextPayment) * 1000
+        : resident.nextPayment * 1000;
+
+        if (!timestamp) return "Inadimplente";
+        return new Date(timestamp).toDateString();
+    }
+
+    function getNextPaymentClass() {
+        let className = "input-group input-group-outline ";
+        const timestamp = typeof resident.nextPayment === "bigint"
+        ? Number(resident.nextPayment) * 1000
+        : resident.nextPayment * 1000;
+
+        if (!timestamp || timestamp < Date.now()) return className + "is-invalid";
+        return className + "is-valid";
+}
+
 
     return (
     <>
@@ -45,17 +103,7 @@ function ResidentPage(){
                         <div className="card-body px-0 pb-2">
                             {
                                 isLoading
-                                ? (
-                                    <div className='row ms-3'>
-                                        <div className='col-md-6 mb-3'>
-                                            <p>
-                                                <i className="material-icons opacity-10 me-2">hourglass_empty</i>
-                                                Loading...                                    
-                                            </p>
-                                        </div>    
-                                    </div>
-  
-                                )    
+                                ? <Loader />    
                                 : <></>    
                             }
                             <div className='row ms-3'>
@@ -63,7 +111,7 @@ function ResidentPage(){
                                     <div className='form-group'>
                                         <label htmlFor='wallet'>Wallet Address</label>
                                         <div className='input-group input-group-outline'>
-                                            <input className='form-control' type="text" id="wallet" value={resident.wallet || ""} placeholder="0x00..." onChange={onResidentChange}></input>
+                                            <input className='form-control' type="text" id="wallet" value={resident.wallet || ""} placeholder="0x00..." onChange={onResidentChange} disabled={!!wallet}></input>
                                         </div>
                                     </div>
                                 </div>    
@@ -71,15 +119,31 @@ function ResidentPage(){
                             <div className='row ms-3'>
                                 <div className='col-md-6 mb-3'>
                                     <div className='form-group'>
-                                        <label htmlFor='residence'>Residence ID</label>
+                                        <label htmlFor='residence'>Residence ID (Block+Apartment)</label>
                                         <div className='input-group input-group-outline'>
-                                            <input className='form-control' type="number" id="residence" value={resident.residence || ""} placeholder="1101" onChange={onResidentChange}></input>
+                                            <input className='form-control' type="number" id="residence" value={resident.residence || ""} placeholder="1101" onChange={onResidentChange} disabled={!!wallet}></input>
                                         </div>
                                     </div>
                                 </div>    
                             </div>
                             {
-                                isManager()
+                                wallet
+                                ? (
+                                            <div className='row ms-3'>
+                                        <div className='col-md-6 mb-3'>
+                                            <div className='form-group'>
+                                                <label htmlFor='nextPayment'>Next Payment:</label>
+                                                <div className={getNextPaymentClass()}>
+                                                    <input className='form-control' type="text" id="nextPayment" value={getNextPayment()} disabled={true}></input>
+                                                </div>
+                                            </div>
+                                        </div>    
+                                    </div>
+                                )
+                                :<></>
+                            }
+                            {
+                                isManager() && wallet
                                 ? (
                                     <div className='row ms-3'>
                                         <div className='col-md-6 mb-3'>
@@ -96,7 +160,7 @@ function ResidentPage(){
                                 <div className='col-md-12 mb-3'>
                                 <button className='btn bg-gradient-dark me-2' onClick={btnSaveClick}>
                                     <i className="material-icons opacity-10 me-2">save</i>
-                                    Save Settings    
+                                    Save Resident    
                                 </button>                                    
                                 <span className='text-danger'>
                                     {message}

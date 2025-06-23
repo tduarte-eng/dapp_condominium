@@ -31,6 +31,11 @@ export function isManager(): boolean {
     return profile !== null && parseInt(profile) === Profile.MANAGER;
 }
 
+export function isResident(): boolean {
+    const profile = localStorage.getItem("profile");
+    return profile !== null && parseInt(profile) === Profile.RESIDENT;
+}
+
 function getProvider(): ethers.BrowserProvider {
     if (!window.ethereum) throw new Error("No Metamask found");
     return new ethers.BrowserProvider(window.ethereum);
@@ -117,13 +122,27 @@ export type ResidentPage = {
 export async function getResidents(page: number = 1, pageSize: number = 10): Promise<ResidentPage> {
     const contract = getContract();
     const result = await contract.getResidents(page, pageSize) as ResidentPage;
-
-
     const residents = [...result.residents.filter(r => r.residence)].sort((a, b) => ethers.toNumber(a.residence - b.residence));
-
-    
     return{
         residents,
         total: result.total
     } as ResidentPage;
+}
+
+export async function getResident(wallet: string): Promise<Resident> {
+    const contract = getContract();
+    return contract.getResident(wallet);
+}
+
+
+export async function removeResident(wallet: string): Promise<Transaction> {
+    if (getProfile() !== Profile.MANAGER) throw new Error("You do not have permission");
+    const contract = await getContractSigner();
+    return contract.removeResident(wallet);
+}
+
+export async function setCounselor(wallet: string, isEntering: boolean): Promise<Transaction> {
+    if (getProfile() !== Profile.MANAGER) throw new Error("You do not have permission");
+    const contract = await getContractSigner();
+    return contract.setCounselor(wallet, isEntering);
 }
