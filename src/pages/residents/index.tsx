@@ -6,7 +6,8 @@ import Alert from "../../components/Alert";
 import ResidentRow from "./ResidentRow"; 
 import { type Resident, getResidents, removeResident } from "../../services/Web3Service";
 import Loader from "../../components/Loader";
-
+import Pagination from "../../components/Pagination";
+import { ethers } from "ethers";
 
 function Residents(){
 
@@ -15,6 +16,7 @@ function Residents(){
     const [message, setMessage] = useState<string>("");
     const [error, setError] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [count, setCount] = useState<ethers.BigNumberish>(0n);
 
 
     function useQuery(){
@@ -28,6 +30,7 @@ function Residents(){
         getResidents(1,10)
             .then(result => {
                 setResidents(result.residents);
+                setCount(result.total); 
                 setIsLoading(false);
                 console.log(result);
             })
@@ -103,13 +106,14 @@ function Residents(){
                         <tbody>
                         {
                         residents && residents.length 
-                            ? residents.map(resident => <ResidentRow data={resident} onDelete={() => onDeleteResident(resident.wallet)} />)
+                            ? residents.map(resident => <ResidentRow key={resident.wallet} data={resident} onDelete={() => onDeleteResident(resident.wallet)} />)
                             : <></>
                         }
                         </tbody>
                         </table>
+                        <Pagination count={count} pageSize={10}/>
                     </div>
-                        <div className='row ms-3'>
+                        <div className='row ms-2'>
                             <div className='col-md-12 mb-3'>
                                 <a className='btn bg-gradient-dark me-2' href="/residents/new">
                                 <i className="material-icons opacity-10 me-2">add</i>

@@ -17,6 +17,12 @@ function ResidentPage(){
     const [message, setMessage] = useState<string>("");
     const [resident, setResident] = useState<Resident>({} as Resident);
 
+
+//    useEffect(() => {
+//        console.log("🟣 Estado atualizado:", resident);
+//    }, [resident]);
+
+
     useEffect(() => {
         if(isResident()){
             doLogout();
@@ -36,14 +42,26 @@ function ResidentPage(){
         }
     },[wallet])
 
-    function onResidentChange(evt: React.ChangeEvent<HTMLInputElement>){
-        setResident(prevState => ({...prevState, [evt.target.id]: evt.target.value}));
-        console.log("🟡 Campo Wallet carregada:", resident.wallet);
-        console.log("🟢 Valor Residencia:", resident.residence);
-        console.log("🔵 Estado isCounselor:", resident.isCounselor, evt.target.value);
+function onResidentChange(evt: React.ChangeEvent<HTMLInputElement>) {
+  const { id, value } = evt.target;
+  if (!wallet)
+      setResident(prevState => ({ ...prevState, [evt.target.id]: evt.target.value}));
+  else {
+    console.log("🟣 Estado atualizado 2:", id, value);
 
-        
-    }
+    setResident(prevState => {
+    const parsedValue = id === "isCounselor" ? value === "true" : value;
+    return {
+      ...prevState,
+      [id]: parsedValue,
+      wallet: prevState.wallet ?? "",
+      residence: prevState.residence ?? ""
+    };
+  });
+  }
+}
+
+
 
     function btnSaveClick(){
         console.log("🟡 Campo Wallet carregada:", resident.wallet);
