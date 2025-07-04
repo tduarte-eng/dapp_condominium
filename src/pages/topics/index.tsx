@@ -3,17 +3,16 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import Footer from "../../components/Footer";
 import Alert from "../../components/Alert";
-import ResidentRow from "./ResidentRow"; 
-import { type Resident, getResidents, removeResident } from "../../services/Web3Service";
-import { deleteApiResident } from "../../services/ApiService";
+//import ResidentRow from "./ResidentRow"; 
+import { type Topic, getTopics, removeTopic } from "../../services/Web3Service";
 import Loader from "../../components/Loader";
 import Pagination from "../../components/Pagination";
 import { ethers } from "ethers";
 
-function Residents(){
+function Topics(){
 
     const navigate = useNavigate();    
-    const [residents, setResidents] = useState<Resident[]>([]);
+    const [topics, setTopics] = useState<Topic[]>([]);
     const [message, setMessage] = useState<string>("");
     const [error, setError] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -28,9 +27,9 @@ function Residents(){
 
     useEffect(() => {
         setIsLoading(true);
-        getResidents(1,10)
+        getTopics(1,10)
             .then(result => {
-                setResidents(result.residents);
+                setTopics(result.topics);
                 setCount(result.total); 
                 setIsLoading(false);
                 console.log(result);
@@ -46,14 +45,12 @@ function Residents(){
         }
     }, [])
 
-    function onDeleteResident(wallet: string){
+    function onDeleteTopic(title: string){
         setIsLoading(true);
         setMessage("");
         setError("");
-        const promiseBlockchain = removeResident(wallet);
-        const promiseBackend = deleteApiResident(wallet);
-        Promise.all([promiseBlockchain, promiseBackend])
-            .then(tx => navigate("/residents?tx=" + tx[0].hash))
+        removeTopic(title)
+            .then(tx => navigate("/residents?tx=" + tx.hash))
             .catch(err => {
                 console.log("ERRO NO CATCH");
                 setIsLoading(false);
@@ -72,8 +69,8 @@ function Residents(){
                     <div className="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
                     <div className="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
                         <h6 className="text-white text-capitalize ps-3">
-                            <i className="material-icons opacity-10 me-2">group</i>    
-                                Residents
+                            <i className="material-icons opacity-10 me-2">interests</i>    
+                                Topics
                         </h6>
                     </div>
                     </div>
@@ -99,28 +96,28 @@ function Residents(){
                         <table className="table align-items-center mb-0">
                         <thead>
                             <tr>
-                            <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Carteira</th>
-                            <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Residência</th>
-                            <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Is Counselor?</th>
-                            <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Next Payment</th>
+                            <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Title</th>
+                            <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Category</th>
+                            <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                            <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Date</th>
                             <th className="text-secondary opacity-7"></th>
                             </tr>
                         </thead>
                         <tbody>
-                        {
+                        {/*
                         residents && residents.length 
                             ? residents.map(resident => <ResidentRow key={resident.wallet} data={resident} onDelete={() => onDeleteResident(resident.wallet)} />)
                             : <></>
-                        }
+                        */}
                         </tbody>
                         </table>
                         <Pagination count={count} pageSize={10}/>
                     </div>
                         <div className='row ms-2'>
                             <div className='col-md-12 mb-3'>
-                                <a className='btn bg-gradient-dark me-2' href="/residents/new">
+                                <a className='btn bg-gradient-dark me-2' href="/topics/new">
                                 <i className="material-icons opacity-10 me-2">add</i>
-                                    Add New Resident    
+                                    Add New Topic    
                                 </a>                                    
                             </div>
                         </div>
@@ -136,4 +133,4 @@ function Residents(){
 
 }
 
-export default Residents;
+export default Topics;

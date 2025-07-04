@@ -1,6 +1,7 @@
 import { Route, BrowserRouter, Routes, Navigate } from 'react-router-dom';
+import Topics from './pages/topics';
 import Login from './pages/Login';
-import Topics from './pages/Topics';
+import TopicPage from './pages/topics/TopicPage';
 import Settings from './pages/Settings';
 import type { JSX } from 'react';
 import Transfer from './pages/Transfer';
@@ -63,6 +64,16 @@ function Router() {
         <BrowserRouter>
             <Routes>
                 <Route path='/' element={<Login />} />
+                <Route path='/topics/edit/:title' element={
+                    <CouncilRoute>
+                        <TopicPage />
+                    </CouncilRoute>    
+                } />
+                <Route path='/topics/new' element={
+                    <PrivateRoute>
+                        <TopicPage />
+                    </PrivateRoute>    
+                } />
                 <Route path='/topics' element={
                     <PrivateRoute>
                         <Topics />

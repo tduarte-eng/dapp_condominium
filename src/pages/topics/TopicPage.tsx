@@ -3,21 +3,20 @@ import Footer from "../../components/Footer";
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SwitchInput from "../../components/SwitchInput";
-import { addResident, doLogout, getResident, getResidents, isManager, isResident, Profile, setCounselor, type Resident } from "../../services/Web3Service";
+import { Category, doLogout, getTopic, isManager, isResident, Profile, Status, type Topic } from "../../services/Web3Service";
 import Loader from "../../components/Loader";
-import { type ApiResident, getApiResident, addApiResident,updateApiResident } from "../../services/ApiService";
+import TopicCategory from "../../components/TopicCategory";
 
 
-function ResidentPage(){
+function TopicPage(){
 
     const navigate = useNavigate();
 
-    let {wallet} = useParams();
+    let { title } = useParams();
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [message, setMessage] = useState<string>("");
-    const [resident, setResident] = useState<Resident>({} as Resident);
-    const [apiResident, setApiResident] = useState<ApiResident>({} as ApiResident);
+    const [topic, setTopic] = useState<Topic>({} as Topic);
 
 //    useEffect(() => {
 //        console.log("🟣 Estado atualizado:", resident);
@@ -25,54 +24,25 @@ function ResidentPage(){
 
 
     useEffect(() => {
-        if(isResident()){
-            doLogout();
-            navigate("/");
-        }
-        if (wallet){
+        if (title){
             setIsLoading(true);
-            const promiseBlockchain = getResident(wallet);
-            const promiseBackend = getApiResident(wallet);
-            
-            Promise.all([promiseBlockchain, promiseBackend]) 
-                .then(results => {
-                    setResident(results[0]);
-                    setApiResident(results[1]);
-                })
+            getTopic(title)
+               .then(topic => setTopic(topic))
                 .catch(err => {
                     setMessage(err.message);
                     setIsLoading(false);
                 });      
         }
-    },[wallet])
+    },[title])
 
-    function onResidentChange(evt: React.ChangeEvent<HTMLInputElement>) {
-        const { id, value } = evt.target;
-        if (!wallet)
-            setResident(prevState => ({ ...prevState, [evt.target.id]: evt.target.value}));
-        else {
-            console.log("🟣 Estado atualizado 2:", id, value);
-
-            setResident(prevState => {
-            const parsedValue = id === "isCounselor" ? value === "true" : value;
-            return {
-            ...prevState,
-            [id]: parsedValue,
-            wallet: prevState.wallet ?? "",
-            residence: prevState.residence ?? ""
-            };
-        });
-        }
+    function onTopicChange(evt: React.ChangeEvent<HTMLInputElement>) {
+        setTopic(prevState => ({ ...prevState, [evt.target.id]: evt.target.value }));
     }
-
-    function onApiResidentChange(evt: React.ChangeEvent<HTMLInputElement>) {
-        setApiResident(prevState => ({...prevState, [evt.target.id]: evt.target.value}));
-    }
-
 
     function btnSaveClick(){
         
-        if(resident){
+        if(topic){
+            /*
             setMessage("Connecting to wallet...wait...");
             if (!wallet) {
                 const promiseBlockchain = addResident(resident.wallet, resident.residence);
@@ -93,10 +63,10 @@ function ResidentPage(){
                     .then(results => navigate("/residents?tx=" + wallet))
                     .catch(err => setMessage(err.message));
  
-            }
+            }*/
         }
     }
-
+/*
     function getNextPayment() {
         const timestamp = typeof resident.nextPayment === "bigint"
         ? Number(resident.nextPayment) * 1000
@@ -114,8 +84,22 @@ function ResidentPage(){
 
         if (!timestamp || timestamp < Date.now()) return className + "is-invalid";
         return className + "is-valid";
-}
+    }
+*/
 
+    function getStatus() : string {
+        switch(topic.status){
+            case Status.APPROVED: return "APPROVED";
+            case Status.DENIED: return "DENIED";
+            case Status.DELETED: return "DELETED";
+            case Status.SPENT: return "SPENT";
+            default: return "IDLE"
+        }
+    }
+
+    function showResponsible() : boolean {
+        return [Category.SPENT, Category.CHANGE_MANAGER].includes(topic.category)
+    }
 
     return (
     <>
@@ -128,8 +112,8 @@ function ResidentPage(){
                         <div className="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
                         <div className="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
                             <h6 className="text-white text-capitalize ps-3">
-                                <i className="material-icons opacity-10 me-2">group</i>
-                                {wallet ? "Edit " : "New "} Resident</h6>
+                                <i className="material-icons opacity-10 me-2">interests</i>
+                                {title ? "Edit " : "New "} Topic</h6>
                         </div>
                         </div>
                         <div className="card-body px-0 pb-2">
@@ -138,12 +122,13 @@ function ResidentPage(){
                                 ? <Loader />    
                                 : <></>    
                             }
+                            
                             <div className='row ms-3'>
                                 <div className='col-md-6 mb-3'>
                                     <div className='form-group'>
-                                        <label htmlFor='wallet'>Wallet Address</label>
+                                        <label htmlFor='title'>Title:</label>
                                         <div className='input-group input-group-outline'>
-                                            <input className='form-control' type="text" id="wallet" value={resident.wallet || ""} placeholder="0x00..." onChange={onResidentChange} disabled={!!wallet}></input>
+                                            <input className='form-control' type="text" id="title" value={topic.title || ""} placeholder="Would be great..." onChange={onTopicChange} disabled={!!title}></input>
                                         </div>
                                     </div>
                                 </div>    
@@ -151,43 +136,55 @@ function ResidentPage(){
                             <div className='row ms-3'>
                                 <div className='col-md-6 mb-3'>
                                     <div className='form-group'>
-                                        <label htmlFor='residence'>Residence ID (Block+Apartment)</label>
+                                        <label htmlFor='description'>Description:</label>
                                         <div className='input-group input-group-outline'>
-                                            <input className='form-control' type="number" id="residence" value={resident.residence || ""} placeholder="1101" onChange={onResidentChange} disabled={!!wallet}></input>
+                                            <input className='form-control' type="number" id="description" value={topic.description || ""} placeholder="..." onChange={onTopicChange} disabled={!!title && topic.status !== Status.IDLE}></input>
                                         </div>
                                     </div>
                                 </div>    
                             </div>
+                            {
+                                title
+                                    ? (
+                                        <div className='row ms-3'>
+                                            <div className='col-md-6 mb-3'>
+                                                <div className='form-group'>
+                                                    <label htmlFor='status'>Status:</label>
+                                                    <div className='input-group input-group-outline'>
+                                                        <input className='form-control' type="text" id="status" value={getStatus()} disabled={true}></input>
+                                                    </div>
+                                                </div>
+                                            </div>    
+                                        </div>
+                                    ) 
+                                    : <></>    
+                            }                            
                             <div className='row ms-3'>
                                 <div className='col-md-6 mb-3'>
                                     <div className='form-group'>
-                                        <label htmlFor='name'>Name:</label>
+                                        <label htmlFor='category'>Category:</label>
                                         <div className='input-group input-group-outline'>
-                                            <input className='form-control' type="text" id="name" value={apiResident.name || ""} onChange={onApiResidentChange} ></input>
+                                            <TopicCategory value={topic.category} onchange={onTopicChange} disabled={!!title}/>
                                         </div>
                                     </div>
                                 </div>    
                             </div>                            
+                            {
+                                showResponsible()
+                                ? (
                             <div className='row ms-3'>
                                 <div className='col-md-6 mb-3'>
                                     <div className='form-group'>
-                                        <label htmlFor='phone'>Phone:</label>
+                                        <label htmlFor='responsible'>Responsible:</label>
                                         <div className='input-group input-group-outline'>
-                                            <input className='form-control' type="tel" id="phone" value={apiResident.phone || ""} placeholder="+5551123456789" onChange={onApiResidentChange} ></input>
+                                            <input className='form-control' type="text" id="responsible" value={topic.responsible || ""} placeholder="0x00..." onChange={onTopicChange} disabled={!!title && topic.status !== Status.IDLE}></input>
                                         </div>
                                     </div>
                                 </div>    
                             </div>                            
-                            <div className='row ms-3'>
-                                <div className='col-md-6 mb-3'>
-                                    <div className='form-group'>
-                                        <label htmlFor='email'>E-mail:</label>
-                                        <div className='input-group input-group-outline'>
-                                            <input className='form-control' type="email" id="email" value={apiResident.email || ""} placeholder="name@company.com" onChange={onApiResidentChange} ></input>
-                                        </div>
-                                    </div>
-                                </div>    
-                            </div>                            
+                                )
+                                : <></>
+                            }    
                            {
                                 wallet
                                 ? (
@@ -217,12 +214,13 @@ function ResidentPage(){
                                 )
                                 : <></>
                             }
+                            
 
                             <div className='row ms-3'>
                                 <div className='col-md-12 mb-3'>
                                 <button className='btn bg-gradient-dark me-2' onClick={btnSaveClick}>
                                     <i className="material-icons opacity-10 me-2">save</i>
-                                    Save Resident    
+                                    Save Topic    
                                 </button>                                    
                                 <span className='text-danger'>
                                     {message}
@@ -242,4 +240,4 @@ function ResidentPage(){
 
 }
 
-export  default ResidentPage;
+export  default TopicPage;
