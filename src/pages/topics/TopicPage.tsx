@@ -35,10 +35,33 @@ function TopicPage(){
         }
     },[title])
 
-    function onTopicChange(evt: React.ChangeEvent<HTMLInputElement>) {
-        setTopic(prevState => ({ ...prevState, [evt.target.id]: evt.target.value }));
+    function onTopicChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const { id, value } = e.target;
+        setTopic(prevState => ({ ...prevState, [id]: id === "category" ? parseInt(value) as Category : value }));
     }
 
+//    function onTopicChange(evt: React.ChangeEvent<HTMLInputElement>) {
+//    const { id, value } = evt.target;
+//    if (!wallet)
+//        setResident(prevState => ({ ...prevState, [evt.target.id]: evt.target.value}));
+//    else {
+//        console.log("🟣 Estado atualizado 2:", id, value);
+
+//        setResident(prevState => {
+//        const parsedValue = id === "isCounselor" ? value === "true" : value;
+//        return {
+//        ...prevState,
+//        [id]: parsedValue,
+//        wallet: prevState.wallet ?? "",
+//        residence: prevState.residence ?? ""
+//        };
+//    });
+//    }
+//}
+    
+    
+    
+    
     function btnSaveClick(){
         
         if(topic){
@@ -66,15 +89,15 @@ function TopicPage(){
             }*/
         }
     }
-/*
-    function getNextPayment() {
-        const timestamp = typeof resident.nextPayment === "bigint"
-        ? Number(resident.nextPayment) * 1000
-        : resident.nextPayment * 1000;
+    function getDate(timestamp:  number) {
+        const dateMs = timestamp * 1000; 
+//        ? Number(resident.nextPayment) * 1000
+//        : resident.nextPayment * 1000;
 
         if (!timestamp) return "Inadimplente";
         return new Date(timestamp).toDateString();
     }
+/*
 
     function getNextPaymentClass() {
         let className = "input-group input-group-outline ";
@@ -98,7 +121,11 @@ function TopicPage(){
     }
 
     function showResponsible() : boolean {
-        return [Category.SPENT, Category.CHANGE_MANAGER].includes(topic.category)
+        return [Category.SPENT, Category.CHANGE_MANAGER].includes(topic.category as 1 | 3)
+    }
+
+    function showAmount() : boolean {
+        return [Category.SPENT, Category.CHANGE_QUOTA].includes(topic.category as 1 | 2)
     }
 
     return (
@@ -164,7 +191,13 @@ function TopicPage(){
                                     <div className='form-group'>
                                         <label htmlFor='category'>Category:</label>
                                         <div className='input-group input-group-outline'>
-                                            <TopicCategory value={topic.category} onchange={onTopicChange} disabled={!!title}/>
+                                            <TopicCategory value={
+                                                topic.category === Category.SPENT || topic.category === Category.CHANGE_MANAGER
+                                                ? topic.category
+                                                : Category.SPENT // valor padrão caso não seja 1 ou 3
+                                                }
+                                                onchange={(e) => onTopicChange({ target: { ...e.target, id: "category", value: String(e.target.value) } } as React.ChangeEvent<HTMLInputElement>)}
+                                                disabled={!!title}/>
                                         </div>
                                     </div>
                                 </div>    
@@ -186,35 +219,21 @@ function TopicPage(){
                                 : <></>
                             }    
                            {
-                                wallet
-                                ? (
-                                            <div className='row ms-3'>
-                                        <div className='col-md-6 mb-3'>
-                                            <div className='form-group'>
-                                                <label htmlFor='nextPayment'>Next Payment:</label>
-                                                <div className={getNextPaymentClass()}>
-                                                    <input className='form-control' type="text" id="nextPayment" value={getNextPayment()} disabled={true}></input>
-                                                </div>
+                            showAmount()
+                            ? (
+                                <div className='row ms-3'>
+                                    <div className='col-md-6 mb-3'>
+                                        <div className='form-group'>
+                                            <label htmlFor='amount'>Amount (wei):</label>
+                                            <div className='input-group input-group-outline'>
+                                                <input className='form-control' type="number" id="amount" value={typeof topic.amount === "bigint" ? topic.amount.toString() : topic.amount || ""} placeholder="0" onChange={onTopicChange} disabled={!!title && topic.status !== Status.IDLE}></input>
                                             </div>
-                                        </div>    
-                                    </div>
-                                )
-                                :<></>
-                            }
-                            {
-                                isManager() && wallet
-                                ? (
-                                    <div className='row ms-3'>
-                                        <div className='col-md-6 mb-3'>
-                                            <div className='form-group'>
-                                                <SwitchInput id="isCounselor" isChecked={resident.isCounselor} text="Is Counselour?" onChange={onResidentChange}/>
-                                            </div>
-                                        </div>    
-                                    </div>
-                                )
-                                : <></>
-                            }
-                            
+                                        </div>
+                                    </div>    
+                                </div>                            
+                                    )
+                                    : <></>
+                                }                                
 
                             <div className='row ms-3'>
                                 <div className='col-md-12 mb-3'>
