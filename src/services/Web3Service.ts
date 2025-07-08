@@ -67,7 +67,7 @@ export async function doLogin(): Promise<LoginResult> {
     if (!accounts || !accounts.length) throw new Error("Wallet not found/allowed");
 
     const contract = getContract(provider);
-//    console.log(contract);
+    console.log(contract);
     const resident = await contract.getResident(accounts[0]) as Resident;
 
     let isManager = resident.isManager;
